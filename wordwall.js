@@ -2014,11 +2014,11 @@ function onEnter() {
 	let gameResult = getGameResult();
 	if (gameResult != kOngoing) {
 		document.getElementById("result-heading").innerHTML =
-				`Wordwal | ${todayDisplay()}`;
+				`WordWall | ${todayDisplay()}`;
 		document.getElementById("answer").innerHTML = answer;
 		document.getElementById("summary").innerHTML = summary;
 		document.getElementById("result").style.display = "flex";
-		copyToClipboard(`Wordwal | ${todayDisplay()}\n\n${summary}`);
+		copyToClipboard(`WordWall | ${todayDisplay()}\n\n${summary}`);
 		showPopup("Result copied to clipboard", 2000);
 	}
 }
