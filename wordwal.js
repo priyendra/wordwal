@@ -1973,10 +1973,13 @@ function pruneForGreen(candidates, position, letter) {
 	return result;
 }
 
-function pruneForGolden(candidates, letter) {
+function pruneForGolden(candidates, position, letter) {
 	let result = [];
 	for (let candidate of candidates) {
-		if (candidate.includes(letter)) result.push(candidate);
+		if (candidate.includes(letter) &&
+		    candidate.charAt(position) !== letter) {
+			result.push(candidate);
+		}
 	}
 	return result;
 }
@@ -2000,7 +2003,7 @@ function showResult() {
 				summary += greenSquare;
 			} else if (answer.includes(letters[i][j])) {
 				summary += goldenSquare;
-				candidates = pruneForGolden(candidates, letters[i][j]);
+				candidates = pruneForGolden(candidates, j, letters[i][j]);
 			} else {
 				summary += blackSquare;
 				candidates = pruneForBlack(candidates, letters[i][j]);
@@ -2009,8 +2012,6 @@ function showResult() {
 		stats = ` ${numCandidatesPrev} > ${candidates.length}`;
 		stats = (stats + new Array(11).fill(' ').join('')).slice(0, 12);
 		summary += (stats + "\n");
-		if (candidates.length < 5) summary += candidates.join(',');
-		summary += "\n";
 	}
 	document.getElementById("result-heading").innerHTML =
 			`Wordwal ${today}`;
