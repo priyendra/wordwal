@@ -1892,6 +1892,14 @@ function strHash(s) {
 	return hash;
 }
 
+function todayDisplay() {
+	return new Date(today).toLocaleString("en-us", {
+	  day: "numeric",
+		month: "short",
+		year: "numeric",
+	});
+}
+
 function selectWord(dateStr) {
   let d = new Date(dateStr);
 	today = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
@@ -2014,11 +2022,11 @@ function showResult() {
 		summary += (stats + "\n");
 	}
 	document.getElementById("result-heading").innerHTML =
-			`Wordwal ${today}`;
+			`Wordwal | ${todayDisplay()}`;
 	document.getElementById("answer").innerHTML = answer;
 	document.getElementById("summary").innerHTML = summary;
 	document.getElementById("result").style.display = "flex";
-	copyToClipboard(`Wordwal ${today}\n\n${summary}`);
+	copyToClipboard(`Wordwal | ${todayDisplay()}\n\n${summary}`);
 	showPopup("Result copied to clipboard", 2000);
 }
 
