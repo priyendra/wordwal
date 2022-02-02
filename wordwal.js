@@ -1862,6 +1862,8 @@ let guesses = new Set(words.concat([
 let today = null;
 let cellMap = new Array(6);
 let letters = new Array(6);
+let candidates = [...words];
+let summary = "";
 let currRow = 0;
 let currCell = 0;
 let answer = "";
@@ -1949,26 +1951,76 @@ function initializeGame() {
 	}
 }
 
-function updateBoard() {
-	for (let i = 0; i < 6; ++i) {
-		for (let j = 0; j < 5; ++j) {
-			cellMap[i][j].innerHTML = letters[i][j];
-			if (i < currRow) {
-				if (answer.charAt(j) === letters[i][j]) {
-					cellMap[i][j].className = "green";
-					trayMap[letters[i][j]].className = "green";
-				} else if (answer.includes(letters[i][j])) {
-					cellMap[i][j].className = "golden";
-					trayMap[letters[i][j]].className = "golden";
-				} else {
-					cellMap[i][j].className = "black";
-					trayMap[letters[i][j]].className = "black";
-				}
-			}
+function onEnter() {
+	let goldens = new Set(answer.split(''));
+	let numCandidatesPrev = candidates.length;
+	for (let j = 0; j < 5; ++j) {
+		let letter = letters[currRow-1][j];
+		if (answer.charAt(j) === letter) {
+			cellMap[currRow-1][j].className = "green";
+			trayMap[letter].className = "green";
+			candidates = pruneForGreen(candidates, j, letter);
+			goldens.delete(letter);
+		} else if (!answer.includes(letter)) {
+			cellMap[currRow-1][j].className = "black";
+			trayMap[letter].className = "black";
+			candidates = pruneForBlack(candidates, letter);
 		}
 	}
+	for (let j = 0; j < 5; ++j) {
+		let letter = letters[currRow-1][j];
+		if (cellMap[currRow-1][j].className != "") continue;
+		// We know the following about @letter if control reaches here.
+		//   - @letter occurs somewhere in the word otherwise the cell would be
+		//     marked with className black in the previous loop.
+		//   - @letter does not occur at index j in the letter otherwise the
+		//     cell would be marked green in the previous loop.
+		// Using this, we update the necessary state of the game as follows:
+
+		// For @cellMap, we mark it as golden but we account for repeat
+		// guesses. That is, if the current row contains a repeat letter we
+		// only mark as many of them as golden as there are in the original
+		// word and others are marked as black. Green letters are counted
+		// towards this quota as well (notice the goldens.delete() line in loop
+		// above)
+		if (goldens.has(letter)) {
+			cellMap[currRow-1][j].className = "golden";
+			goldens.delete(letter);
+		} else {
+			cellMap[currRow-1][j].className = "black";
+		}
+
+		// For @trayMap, we can mark it as golden unless it was already marked
+		// as green because of an exact match because of some other position.
+		if (trayMap[letter].className != "green") {
+			trayMap[letter].className = "golden";
+		}
+
+		// For candidates, we can prune this like a normal golden letter.
+		candidates = pruneForGolden(candidates, j, letter);
+	}
+	for (let j = 0; j < 5; ++j) {
+		if (cellMap[currRow-1][j].className === "green") {
+			summary += greenSquare;
+		} else if (cellMap[currRow-1][j].className === "golden") {
+			summary += goldenSquare;
+		} else {
+			summary += blackSquare;
+		}
+	}
+	stats = ` ${numCandidatesPrev} > ${candidates.length}`;
+	stats = (stats + new Array(11).fill(' ').join('')).slice(0, 12);
+	summary += (stats + "\n");
 	let gameResult = getGameResult();
-	if (gameResult != kOngoing) showResult();
+	if (gameResult != kOngoing) {
+		document.getElementById("result-heading").innerHTML =
+				`Wordwal | ${todayDisplay()}`;
+		document.getElementById("answer").innerHTML = answer;
+		document.getElementById("summary").innerHTML = summary;
+		document.getElementById("result").style.display = "flex";
+		copyToClipboard(`Wordwal | ${todayDisplay()}\n\n${summary}`);
+		showPopup("Result copied to clipboard", 2000);
+	}
 }
 
 function pruneForGreen(candidates, position, letter) {
@@ -1998,36 +2050,6 @@ function pruneForBlack(candidates, letter) {
 		if (!candidate.includes(letter)) result.push(candidate);
 	}
 	return result;
-}
-
-function showResult() {
-	let candidates = [...words];
-	let summary = "";
-	for (let i = 0; i < currRow; ++i) {
-		let numCandidatesPrev = candidates.length;
-		for (let j = 0; j < 5; ++j) {
-			if (answer.charAt(j) === letters[i][j]) {
-				candidates = pruneForGreen(candidates, j, letters[i][j]);
-				summary += greenSquare;
-			} else if (answer.includes(letters[i][j])) {
-				summary += goldenSquare;
-				candidates = pruneForGolden(candidates, j, letters[i][j]);
-			} else {
-				summary += blackSquare;
-				candidates = pruneForBlack(candidates, letters[i][j]);
-			}
-		}
-		stats = ` ${numCandidatesPrev} > ${candidates.length}`;
-		stats = (stats + new Array(11).fill(' ').join('')).slice(0, 12);
-		summary += (stats + "\n");
-	}
-	document.getElementById("result-heading").innerHTML =
-			`Wordwal | ${todayDisplay()}`;
-	document.getElementById("answer").innerHTML = answer;
-	document.getElementById("summary").innerHTML = summary;
-	document.getElementById("result").style.display = "flex";
-	copyToClipboard(`Wordwal | ${todayDisplay()}\n\n${summary}`);
-	showPopup("Result copied to clipboard", 2000);
 }
 
 function copyToClipboard(text) {
@@ -2079,24 +2101,26 @@ function onKeyDown(keyCode, key) {
 	if (keyCode >= 65 && keyCode <= 90) {  // normal letter
 		if (currCell < 5) {
 			letters[currRow][currCell] = key.toUpperCase();
+			cellMap[currRow][currCell].innerHTML = key.toUpperCase();
 			++currCell;
 		}
 	} else if (keyCode == kBkspKeyCode) {  // backspace
 		if (currCell > 0) {
 			--currCell;
 			letters[currRow][currCell] = ' ';
+			cellMap[currRow][currCell].innerHTML = ' ';
 		}
 	} else if (keyCode == kEnterKeyCode) {  // enter
 		if (currCell == 5) {
 			if (guesses.has(letters[currRow].join(''))) {
 				++currRow;
 				currCell = 0;
+				onEnter();
 			} else {
 				showPopup("Word not in list", 1500);
 			}
 		}
 	}
-	updateBoard();
 }
 
 fetch('https://worldtimeapi.org/api/timezone/America/Los_Angeles')
