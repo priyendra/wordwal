@@ -1907,11 +1907,10 @@ function selectWord(dateStr) {
 	today = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
 	let wordIndex = strHash(today) % words.length;
 	if (wordIndex < 0) wordIndex += words.length;
-	// return words[wordIndex];
-	return "ample";
+	return words[wordIndex];
 }
 
-function initializeGame() {
+function initializeBoard() {
 	let table = document.getElementById("board");
 	let tbody = document.createElement("tbody");
 	for (let i = 0; i < 6; ++i) {
@@ -1927,7 +1926,9 @@ function initializeGame() {
 		tbody.appendChild(row);
 	}
 	table.appendChild(tbody);
+}
 
+function initializeKeyboard() {
 	for (let rowid in keyBoardRows) {
 		let keyBoardRow = keyBoardRows[rowid];
 		for (let key of keyBoardRow) {
@@ -1951,75 +1952,19 @@ function initializeGame() {
 	}
 }
 
-function onEnter() {
-	let goldens = new Set(answer.split(''));
-	let numCandidatesPrev = candidates.length;
-	for (let j = 0; j < 5; ++j) {
-		let letter = letters[currRow-1][j];
-		if (answer.charAt(j) === letter) {
-			cellMap[currRow-1][j].className = "green";
-			trayMap[letter].className = "green";
-			candidates = pruneForGreen(candidates, j, letter);
-			goldens.delete(letter);
-		} else if (!answer.includes(letter)) {
-			cellMap[currRow-1][j].className = "black";
-			trayMap[letter].className = "black";
-			candidates = pruneForBlack(candidates, letter);
+function maybeRestoreGameState() {
+	var state = window.localStorage.getItem(today);
+	if (state != null) {
+		state = JSON.parse(state);
+		letters = state["letters"];
+		for (let i = 0; i < state["currRow"]; ++i) {
+			for (let j = 0; j < 5; ++j) {
+				cellMap[i][j].innerHTML = letters[i][j];
+			}
+			onEnter(i);
+			++currRow;
 		}
-	}
-	for (let j = 0; j < 5; ++j) {
-		let letter = letters[currRow-1][j];
-		if (cellMap[currRow-1][j].className != "") continue;
-		// We know the following about @letter if control reaches here.
-		//   - @letter occurs somewhere in the word otherwise the cell would be
-		//     marked with className black in the previous loop.
-		//   - @letter does not occur at index j in the letter otherwise the
-		//     cell would be marked green in the previous loop.
-		// Using this, we update the necessary state of the game as follows:
-
-		// For @cellMap, we mark it as golden but we account for repeat
-		// guesses. That is, if the current row contains a repeat letter we
-		// only mark as many of them as golden as there are in the original
-		// word and others are marked as black. Green letters are counted
-		// towards this quota as well (notice the goldens.delete() line in loop
-		// above)
-		if (goldens.has(letter)) {
-			cellMap[currRow-1][j].className = "golden";
-			goldens.delete(letter);
-		} else {
-			cellMap[currRow-1][j].className = "black";
-		}
-
-		// For @trayMap, we can mark it as golden unless it was already marked
-		// as green because of an exact match because of some other position.
-		if (trayMap[letter].className != "green") {
-			trayMap[letter].className = "golden";
-		}
-
-		// For candidates, we can prune this like a normal golden letter.
-		candidates = pruneForGolden(candidates, j, letter);
-	}
-	for (let j = 0; j < 5; ++j) {
-		if (cellMap[currRow-1][j].className === "green") {
-			summary += greenSquare;
-		} else if (cellMap[currRow-1][j].className === "golden") {
-			summary += goldenSquare;
-		} else {
-			summary += blackSquare;
-		}
-	}
-	stats = ` ${numCandidatesPrev} > ${candidates.length}`;
-	stats = (stats + new Array(11).fill(' ').join('')).slice(0, 12);
-	summary += (stats + "\n");
-	let gameResult = getGameResult();
-	if (gameResult != kOngoing) {
-		document.getElementById("result-heading").innerHTML =
-				`WordWall | ${todayDisplay()}`;
-		document.getElementById("answer").innerHTML = answer;
-		document.getElementById("summary").innerHTML = summary;
-		document.getElementById("result").style.display = "flex";
-		copyToClipboard(`WordWall | ${todayDisplay()}\n\n${summary}`);
-		showPopup("Result copied to clipboard", 2000);
+		if (getGameResult() != kOngoing) showResult();
 	}
 }
 
@@ -2075,10 +2020,74 @@ function showPopup(text, timeout) {
 
 function beginGame(word) {
 	answer = word.toUpperCase();
-	initializeGame();
+	initializeBoard();
+	initializeKeyboard();
+	maybeRestoreGameState();
 	popupDiv = document.getElementById("popup");
 	document.addEventListener(
 			'keydown', function (e) { onKeyDown(e.keyCode, e.key) });
+}
+
+function onEnter(row) {
+	let goldens = new Set(answer.split(''));
+	let numCandidatesPrev = candidates.length;
+	for (let j = 0; j < 5; ++j) {
+		let letter = letters[row][j];
+		if (answer.charAt(j) === letter) {
+			cellMap[row][j].className = "green";
+			trayMap[letter].className = "green";
+			candidates = pruneForGreen(candidates, j, letter);
+			goldens.delete(letter);
+		} else if (!answer.includes(letter)) {
+			cellMap[row][j].className = "black";
+			trayMap[letter].className = "black";
+			candidates = pruneForBlack(candidates, letter);
+		}
+	}
+	for (let j = 0; j < 5; ++j) {
+		let letter = letters[row][j];
+		if (cellMap[row][j].className != "") continue;
+		// We know the following about @letter if control reaches here.
+		//   - @letter occurs somewhere in the word otherwise the cell would be
+		//     marked with className black in the previous loop.
+		//   - @letter does not occur at index j in the letter otherwise the
+		//     cell would be marked green in the previous loop.
+		// Using this, we update the necessary state of the game as follows:
+
+		// For @cellMap, we mark it as golden but we account for repeat
+		// guesses. That is, if the current row contains a repeat letter we
+		// only mark as many of them as golden as there are in the original
+		// word and others are marked as black. Green letters are counted
+		// towards this quota as well (notice the goldens.delete() line in loop
+		// above)
+		if (goldens.has(letter)) {
+			cellMap[row][j].className = "golden";
+			goldens.delete(letter);
+		} else {
+			cellMap[row][j].className = "black";
+		}
+
+		// For @trayMap, we can mark it as golden unless it was already marked
+		// as green because of an exact match because of some other position.
+		if (trayMap[letter].className != "green") {
+			trayMap[letter].className = "golden";
+		}
+
+		// For candidates, we can prune this like a normal golden letter.
+		candidates = pruneForGolden(candidates, j, letter);
+	}
+	for (let j = 0; j < 5; ++j) {
+		if (cellMap[row][j].className === "green") {
+			summary += greenSquare;
+		} else if (cellMap[row][j].className === "golden") {
+			summary += goldenSquare;
+		} else {
+			summary += blackSquare;
+		}
+	}
+	stats = ` ${numCandidatesPrev} > ${candidates.length}`;
+	stats = (stats + new Array(11).fill(' ').join('')).slice(0, 12);
+	summary += (stats + "\n");
 }
 
 function getGameResult() {
@@ -2094,6 +2103,16 @@ function getGameResult() {
 	}
 	if (currRow == 6) return kLost;
 	return kOngoing;
+}
+
+function showResult() {
+	document.getElementById("result-heading").innerHTML =
+			`WordWall | ${todayDisplay()}`;
+	document.getElementById("answer").innerHTML = answer;
+	document.getElementById("summary").innerHTML = summary;
+	document.getElementById("result").style.display = "flex";
+	copyToClipboard(`WordWall | ${todayDisplay()}\n\n${summary}`);
+	showPopup("Result copied to clipboard", 2000);
 }
 
 function onKeyDown(keyCode, key) {
@@ -2113,9 +2132,14 @@ function onKeyDown(keyCode, key) {
 	} else if (keyCode == kEnterKeyCode) {  // enter
 		if (currCell == 5) {
 			if (guesses.has(letters[currRow].join(''))) {
+				onEnter(currRow);
 				++currRow;
 				currCell = 0;
-				onEnter();
+				window.localStorage.setItem(today, JSON.stringify({
+					"letters": letters,
+					"currRow": currRow,
+				}));
+				if (getGameResult() != kOngoing) showResult();
 			} else {
 				showPopup("Word not in list", 1500);
 			}
