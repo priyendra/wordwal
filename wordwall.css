@@ -1,27 +1,46 @@
 html * {
-	font-family: sans-serif;
+	font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+	text-transform: uppercase;
+}
+
+body {
+	margin: 0px;
 }
 
 #container {
 	margin: auto;
-	width: 375px;
+	width: 100vw;
+	height: 100vh;
+	max-width: 500px;
+	border-left: 1px solid rgb(224, 224, 224);
+	border-right: 1px solid rgb(224, 224, 224);
 }
 
 #header {
 	text-align: center;
-	font-size: 2.5em;
+	font-weight: 700;
+	font-size: 36px;
 	font-family: sans-serif;
+	letter-spacing: 0.2rem;
+	border-bottom: 1px solid rgb(224, 224, 224);
+}
+
+#show-result {
+	float: right;
+	cursor: pointer;
 }
 
 #board {
 	margin: auto;
 	vertical-align: middle;
 	border-spacing: 5px;
+	table-layout: fixed;
+	margin-top: 50px;
 }
 
 #board td {
-	width: 40px;
-	height: 45px;
+	width: 55px;
+	height: 55px;
 	border: 1px solid #B8B8B8;
 	text-align: center;
 	vertical-align: middle;
@@ -55,15 +74,33 @@ html * {
 	vertical-align: middle;
   justify-content: center;
   align-content: center;
-  flex-direction: column;
+	position: fixed;
+	z-index: 100;
+	background-color: white;
+	border: 1px solid rgb(224, 224, 224);
+	width: 80%;
+	max-width: 400px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+  transform: translate(-50%, -50%);
+	padding-bottom: 20px;
+	box-shadow: 20px 20px 15px grey;
+}
+#hide-result {
+	float: right;
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+	border: 1px solid rgb(224, 224, 224);
 }
 
 #popup {
 	display: none;
 	position: absolute; /* Stay in place */
-	z-index: 100;
+	z-index: 200;
   left: 50%;
-  top: 30%;
+  top: 70%;
   transform: translate(-50%, -50%);
 	background-color: rgb(96,96,96);
 	color: white;
@@ -74,8 +111,18 @@ html * {
 	box-shadow: 20px 20px 15px grey;
 }
 
-#result-heading {
-	font-size: 1.5em;
+#share {
+	background-color: rgb(106, 170, 100);
+	width: 120px;
+	margin: auto;
+	height: 40px;
+	line-height: 40px;
+	color: white;
+	font-weight: 700;
+	padding: 10px;
+	border-radius: 5px;
+	font-size: 24px;
+	cursor: pointer;
 }
 
 pre {
@@ -84,20 +131,30 @@ pre {
 	letter-spacing: 0.05em;
 }
 
-.letter-tray {
-	display: table;
-	list-style-type: none;
+#letter-tray {
+  width: 100%;
+	max-width: 500px;
+	position: fixed;
+	left: 50%;
+	bottom: 10px;
+	transform: translate(-50%, -0%);
+	transform-origin: 0 50%;
+}
+
+#letter-tray table {
+	width: 98%;
 	margin: auto;
 	border-spacing: 5px;
 	padding: 0px;
 }
 
-.letter-tray li {
-	display: inline-block;
-	padding: 12px 10px 12px 10px;
+#letter-tray td {
 	margin: 2px;
 	border-radius: 5px;
 	cursor: pointer;
+	height: 50px;
+	min-width: 20px;
+	text-align: center;
 }
 .is-blurred {
 	filter: blur(2px);

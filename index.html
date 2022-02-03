@@ -12,16 +12,22 @@
 		<div id="container">
 			<div>
 			</div>
-			<div id="header">WordWall</div>
-			<table id="board"></table>
-			<ul class="letter-tray" id="letter-tray-row-one"></ul>
-			<ul class="letter-tray" id="letter-tray-row-two"></ul>
-			<ul class="letter-tray" id="letter-tray-row-three"></ul>
-			<div id="result">
-				<h1 id="answer"></h1>
-				<span id="result-heading"></span>
-				<pre id="summary"></pre>
+			<div id="header">
+				WordWall
+				<div id="show-result" onclick="maybeShowResult()">&#128202;</div>
 			</div>
+			<table id="board"></table>
+			<div id="letter-tray">
+				<table><tr id="letter-tray-row-one"></tr></table>
+				<table><tr id="letter-tray-row-two"></tr></table>
+				<table><tr id="letter-tray-row-three"></tr></table>
+			</div>
+		</div>
+		<div id="result">
+			<div id="hide-result" onclick="hideResult()">x</div>
+			<div><h1 id="answer"></h1></div>
+			<div><pre id="summary"></pre></div>
+			<div id="share" onclick="onShareBtn()">Share</div>
 		</div>
 	</body>
 </html>

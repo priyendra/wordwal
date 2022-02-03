@@ -1932,7 +1932,7 @@ function initializeKeyboard() {
 	for (let rowid in keyBoardRows) {
 		let keyBoardRow = keyBoardRows[rowid];
 		for (let key of keyBoardRow) {
-			let li = document.createElement("li");
+			let li = document.createElement("td");
 			li.innerHTML = key;
 			li.className = "gray";
 			let keyCode = null;
@@ -1964,7 +1964,7 @@ function maybeRestoreGameState() {
 			onEnter(i);
 			++currRow;
 		}
-		if (getGameResult() != kOngoing) showResult();
+		maybeShowResult();
 	}
 }
 
@@ -2009,21 +2009,19 @@ function copyToClipboard(text) {
 function showPopup(text, timeout) {
 	popupDiv.innerHTML = text;
 	popupDiv.style.display = "block";
-	document.getElementById("container").className = "is-blurred";
 	if (timeout > 0) {
 		setTimeout(function () {
 			popupDiv.style.display = "none";
-			document.getElementById("container").className = "";
 		}, timeout);
 	}
 }
 
 function beginGame(word) {
+	popupDiv = document.getElementById("popup");
 	answer = word.toUpperCase();
 	initializeBoard();
 	initializeKeyboard();
 	maybeRestoreGameState();
-	popupDiv = document.getElementById("popup");
 	document.addEventListener(
 			'keydown', function (e) { onKeyDown(e.keyCode, e.key) });
 }
@@ -2105,14 +2103,22 @@ function getGameResult() {
 	return kOngoing;
 }
 
-function showResult() {
-	document.getElementById("result-heading").innerHTML =
-			`WordWall | ${todayDisplay()}`;
-	document.getElementById("answer").innerHTML = answer;
-	document.getElementById("summary").innerHTML = summary;
-	document.getElementById("result").style.display = "flex";
+function onShareBtn() {
 	copyToClipboard(`WordWall | ${todayDisplay()}\n\n${summary}`);
 	showPopup("Result copied to clipboard", 2000);
+}
+
+function maybeShowResult() {
+	if (getGameResult() == kOngoing) return;
+	document.getElementById("answer").innerHTML = answer;
+	document.getElementById("summary").innerHTML = summary;
+	document.getElementById("result").style.display = "block";
+	document.getElementById("container").className = "is-blurred";
+}
+
+function hideResult() {
+	document.getElementById("result").style.display = "none";
+	document.getElementById("container").className = "";
 }
 
 function onKeyDown(keyCode, key) {
@@ -2136,10 +2142,11 @@ function onKeyDown(keyCode, key) {
 				++currRow;
 				currCell = 0;
 				window.localStorage.setItem(today, JSON.stringify({
+					"answer": answer,
 					"letters": letters,
 					"currRow": currRow,
 				}));
-				if (getGameResult() != kOngoing) showResult();
+				maybeShowResult();
 			} else {
 				showPopup("Word not in list", 1500);
 			}
