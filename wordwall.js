@@ -1883,17 +1883,6 @@ const keyBoardRows = {
 };
 let trayMap = {};
 
-function strHash(s) {
-	let hash = 0, i, chr;
-	if (s.length === 0) return hash;
-	for (i = 0; i < s.length; i++) {
-		chr = s.charCodeAt(i);
-		hash = ((hash << 5) - hash) + chr;
-		hash |= 0; // Convert to 32bit integer
-	}
-	return hash;
-}
-
 function todayDisplay() {
 	return new Date(today).toLocaleString("en-us", {
 	  day: "numeric",
@@ -1905,7 +1894,7 @@ function todayDisplay() {
 function selectWord(dateStr) {
   let d = new Date(dateStr);
 	today = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
-	let wordIndex = strHash(today) % words.length;
+	let wordIndex = parseInt(MD5(today), 16) % words.length;
 	if (wordIndex < 0) wordIndex += words.length;
 	return words[wordIndex];
 }
